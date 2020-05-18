@@ -1,5 +1,18 @@
 exports.getPosts = (req, res) => {
-  res.status(200).json({ title: 'Feed 1', message: 'This is a message' });
+  res.status(200).json({
+    posts: [
+      {
+        _id: '1',
+        title: 'Feed 1',
+        content: 'This is a message',
+        imageUrl: 'images/desktop.png',
+        creator: {
+          name: 'John',
+        },
+        createdAt: new Date(),
+      },
+    ],
+  });
 };
 
 exports.createPost = (req, res) => {
