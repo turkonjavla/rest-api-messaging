@@ -1,4 +1,4 @@
-const mongoose = require(mongoose);
+const mongoose = require('mongoose');
 const { MONGO_URI } = require('../keys');
 
 mongoose
