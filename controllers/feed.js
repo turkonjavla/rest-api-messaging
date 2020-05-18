@@ -1,3 +1,5 @@
+const { validationResult } = require('express-validator');
+
 exports.getPosts = (req, res) => {
   res.status(200).json({
     posts: [
@@ -17,11 +19,24 @@ exports.getPosts = (req, res) => {
 
 exports.createPost = (req, res) => {
   const { title, content } = req.body;
+  const errors = validationResult(req);
 
-  console.log(title, content);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({
+      message: 'There was an error when creating a post',
+      errors: errors.array(),
+    });
+  }
+
   // create in db
   return res.status(201).json({
     message: 'Post created',
-    post: { id: new Date().toISOString(), title, content },
+    post: {
+      _id: new Date().toISOString(),
+      title,
+      content,
+      creator: { name: 'John' },
+      createdAt: new Date(),
+    },
   });
 };
