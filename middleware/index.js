@@ -32,7 +32,8 @@ const CommonMidldewware = app => {
     console.error(error);
     const status = error.statusCode || 500;
     const message = error.message;
-    res.status(status).json({ message });
+    const errorData = error.data;
+    res.status(status).json({ message, errorData });
   });
   app.use('/images', express.static(path.join(__dirname, '..', 'images')));
   app.use(
