@@ -2,7 +2,9 @@ const router = require('express').Router();
 const feedController = require('../controllers/feed');
 const { body } = require('express-validator');
 
-router.get('/posts', feedController.getPosts);
+const protectedRoute = require('../middleware/protected-route');
+
+router.get('/posts', protectedRoute, feedController.getPosts);
 router.post(
   '/post',
   [

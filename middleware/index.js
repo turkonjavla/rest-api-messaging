@@ -24,7 +24,11 @@ const fileFilter = (req, file, cb) => {
 };
 
 const CommonMidldewware = app => {
-  app.use(cors());
+  app.use(
+    cors({
+      allowedHeaders: 'Content-Type, Authorization',
+    })
+  );
   app.use(helmet());
   app.use(morgan('dev'));
   app.use(bodyParser.json());
