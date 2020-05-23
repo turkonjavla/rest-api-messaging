@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const Post = require('../models/post');
+const User = require('../models/user');
 
 exports.getPosts = (req, res, next) => {
   const currentPage = req.query.page || 1;
@@ -36,6 +37,7 @@ exports.getPosts = (req, res, next) => {
 
 exports.createPost = (req, res, next) => {
   const { title, content } = req.body;
+  let creator;
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -56,16 +58,28 @@ exports.createPost = (req, res, next) => {
     title,
     content,
     imageUrl,
-    creator: { name: 'John' },
+    creator: req.userId,
   });
 
   post
     .save()
-    .then(result => {
-      console.log(result);
+    .then(() => {
+      return User.findById(req.userId);
+    })
+    .then(user => {
+      creator = user;
+      user.posts.push(post);
+
+      return user.save();
+    })
+    .then(() => {
       return res.status(201).json({
         message: 'Post created',
-        post: result,
+        post,
+        creator: {
+          _id: creator._id,
+          name: creator.name,
+        },
       });
     })
     .catch(err => {
@@ -124,6 +138,12 @@ exports.updatePost = (req, res, next) => {
       console.log(post);
       if (!post) {
         const error = new Error(`Couldn't find post`);
+        error.statusCode = 303;
+        throw error;
+      }
+
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not authorized');
         error.statusCode = 404;
         throw error;
       }
@@ -153,16 +173,27 @@ exports.deletePost = (req, res, next) => {
 
   Post.findById(postId)
     .then(post => {
-      // check for user
-
       if (!post) {
         const error = new Error(`Post doesn't exist`);
         error.statusCode = 422;
         throw error;
       }
 
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not authorized');
+        error.statusCode = 404;
+        throw error;
+      }
+
       clearImage(post.imageUrl);
       return Post.findByIdAndRemove(postId);
+    })
+    .then(() => {
+      return User.findById(req.userId);
+    })
+    .then(user => {
+      user.posts.pull(postId);
+      return user.save();
     })
     .then(() => res.status(200).json({ message: 'Post deleted successfully!' }))
     .catch(err => {
