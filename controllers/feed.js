@@ -167,7 +167,7 @@ exports.deletePost = async (req, res, next) => {
       throw error;
     }
 
-    clearImage();
+    clearImage(post.imageUrl);
     await Post.findByIdAndRemove(postId);
 
     const user = await User.findById(req.userId);
