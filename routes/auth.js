@@ -12,6 +12,8 @@ router.post(
   [
     body('email')
       .isEmail()
+      .not()
+      .isEmpty()
       .withMessage('Please enter a valid email')
       .custom((value, { req }) => {
         return User.findOne({ email: value }).then(userDoc => {
@@ -21,10 +23,11 @@ router.post(
         });
       })
       .normalizeEmail(),
-    body('password').trim().isLength({ min: 5 }),
-    body('name').trim(),
+    body('password').trim().not().isEmpty().isLength({ min: 5 }),
+    body('name').trim().not().isEmpty(),
   ],
   authController.signup
 );
+router.post('/login', authController.login);
 
 module.exports = router;
