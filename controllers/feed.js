@@ -12,6 +12,7 @@ exports.getPosts = async (req, res, next) => {
   try {
     const totalItems = await Post.find().countDocuments();
     const posts = await Post.find()
+      .populate('creator')
       .skip((currentPage - 1) * perPage)
       .limit(perPage);
 
@@ -117,7 +118,9 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = Post.findById(postId);
+    const post = await Post.findById(postId);
+
+    console.log(post);
 
     if (!post) {
       const error = new Error(`Couldn't find post`);
