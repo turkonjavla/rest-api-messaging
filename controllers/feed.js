@@ -118,7 +118,9 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = Post.findById(postId);
+    const post = await Post.findById(postId);
+
+    console.log(post);
 
     if (!post) {
       const error = new Error(`Couldn't find post`);
