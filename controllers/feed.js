@@ -2,6 +2,8 @@ const { validationResult } = require('express-validator');
 const fs = require('fs');
 const path = require('path');
 
+const io = require('../socket');
+
 const Post = require('../models/post');
 const User = require('../models/user');
 
@@ -13,6 +15,7 @@ exports.getPosts = async (req, res, next) => {
     const totalItems = await Post.find().countDocuments();
     const posts = await Post.find()
       .populate('creator')
+      .sort({ createdAt: 'desc' })
       .skip((currentPage - 1) * perPage)
       .limit(perPage);
 
@@ -56,6 +59,11 @@ exports.createPost = async (req, res, next) => {
 
     user.posts.push(post);
     await user.save();
+
+    io.getIo().emit('posts', {
+      action: 'create',
+      post: { ...post._doc, creator: { _id: req.userId, name: user.name } },
+    });
 
     res.status(201).json({
       message: 'Post created',
@@ -118,7 +126,7 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate('creator');
 
     if (!post) {
       const error = new Error(`Couldn't find post`);
@@ -126,7 +134,7 @@ exports.updatePost = async (req, res, next) => {
       throw error;
     }
 
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       const error = new Error('Not authorized');
       error.statusCode = 404;
       throw error;
@@ -141,6 +149,8 @@ exports.updatePost = async (req, res, next) => {
     post.imageUrl = imageUrl;
 
     const updatedPost = await post.save();
+
+    io.getIo().emit('posts', { action: 'update', post: updatedPost });
     res.status(200).json({ message: 'Post updated', updatedPost });
   } catch (error) {
     if (!error.statusCode) {
@@ -176,6 +186,7 @@ exports.deletePost = async (req, res, next) => {
 
     await user.save();
 
+    io.getIo().emit('posts', { action: 'delete', post: postId });
     res.status(200).json({ message: 'Post deleted successfully!' });
   } catch (error) {
     if (!error.statusCode) {
