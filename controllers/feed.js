@@ -120,8 +120,6 @@ exports.updatePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId);
 
-    console.log(post);
-
     if (!post) {
       const error = new Error(`Couldn't find post`);
       error.statusCode = 303;
