@@ -7,7 +7,10 @@ const Middleware = require('./middleware');
 Middleware(app);
 
 const feed = require('./routes/feed');
+const auth = require('./routes/auth');
+
 app.use('/feed', feed);
+app.use('/auth', auth);
 
 app.listen(PORT, () => {
   console.log(`Server is running on: http://${HOST}:${PORT}`);
