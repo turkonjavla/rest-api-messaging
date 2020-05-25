@@ -1,26 +1,24 @@
 const express = require('express');
-const http = require('http');
-const socketio = require('./socket');
+const graphqlHttp = require('express-graphql');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketio.init(server);
 
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 const { HOST, PORT } = require('./keys');
+
+app.use(
+  '/graphql',
+  graphqlHttp({
+    schema: graphqlSchema,
+    rootValue: graphqlResolver,
+    graphiql: true,
+  })
+);
 
 const Middleware = require('./middleware');
 Middleware(app);
 
-const feed = require('./routes/feed');
-const auth = require('./routes/auth');
-
-app.use('/feed', feed);
-app.use('/auth', auth);
-
-io.on('connection', socket => {
-  console.log('A user connected');
-});
-
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server is running on: http://${HOST}:${PORT}`);
 });
