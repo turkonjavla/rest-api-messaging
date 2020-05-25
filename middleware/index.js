@@ -4,7 +4,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const multer = require('multer');
 const path = require('path');
-const cors = require('cors');
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'images'),
@@ -24,11 +23,6 @@ const fileFilter = (req, file, cb) => {
 };
 
 const CommonMidldewware = app => {
-  app.use(
-    cors({
-      allowedHeaders: 'Content-Type, Authorization',
-    })
-  );
   app.use(helmet());
   app.use(morgan('dev'));
   app.use(bodyParser.json());

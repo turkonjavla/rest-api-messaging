@@ -1,5 +1,6 @@
 const express = require('express');
 const graphqlHttp = require('express-graphql');
+const cors = require('cors');
 
 const app = express();
 
@@ -9,10 +10,25 @@ const { HOST, PORT } = require('./keys');
 
 app.use(
   '/graphql',
+  cors(),
   graphqlHttp({
     schema: graphqlSchema,
     rootValue: graphqlResolver,
     graphiql: true,
+    customFormatErrorFn(err) {
+      if (!err.originalError) {
+        return err;
+      }
+      const data = err.originalError.data;
+      const message = err.message || 'An error occured';
+      const code = err.originalError.code || 500;
+
+      return {
+        message,
+        code,
+        data,
+      };
+    },
   })
 );
 
