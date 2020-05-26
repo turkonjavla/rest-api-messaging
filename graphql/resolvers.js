@@ -1,9 +1,11 @@
-const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 
 const { BCRYPT_ROUNDS, JWT_SECRET, JWT_EXPIRES_IN } = require('../keys');
+
+const Post = require('../models/post');
+const User = require('../models/user');
 
 module.exports = {
   createUser: async function (args, req) {
@@ -86,5 +88,63 @@ module.exports = {
       { expiresIn: JWT_EXPIRES_IN }
     );
     return { token, userId: user._id.toString() };
+  },
+
+  createPost: async function (args, req) {
+    if (req.isAuth !== true) {
+      const error = new Error('Not authenticated');
+      error.code = 401;
+      throw error;
+    }
+
+    const { title, content, imageUrl } = args.postInput;
+    const errors = [];
+
+    if (validator.isEmpty(title) || !validator.isLength(title, { min: 5 })) {
+      errors.push({ message: 'Title is invalid' });
+    }
+
+    if (
+      validator.isEmpty(content) ||
+      !validator.isLength(content, { min: 5 })
+    ) {
+      errors.push({ message: 'Content is invalid' });
+    }
+
+    if (errors.length > 0) {
+      const error = new Error('There were some errors!');
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      const error = new Error('Invalid user ');
+      error.data = errors;
+      error.code = 401;
+      throw error;
+    }
+
+    try {
+      const newPost = new Post({
+        title: title,
+        content: content,
+        imageUrl: imageUrl,
+        creator: user,
+      });
+
+      const createdPost = await newPost.save();
+
+      user.posts.push(createdPost);
+      await user.save();
+      return {
+        ...createdPost._doc,
+        _id: createdPost._id.toString(),
+        createdAt: createdPost.createdAt.toISOString(),
+        updatedAt: createdPost.updatedAt.toISOString(),
+      };
+    } catch (error) {}
   },
 };

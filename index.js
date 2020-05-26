@@ -2,12 +2,15 @@ const express = require('express');
 const graphqlHttp = require('express-graphql');
 const cors = require('cors');
 
+const protectedRoute = require('./middleware/protected-route');
+
 const app = express();
 
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const { HOST, PORT } = require('./keys');
 
+app.use(protectedRoute);
 app.use(
   '/graphql',
   cors(),
