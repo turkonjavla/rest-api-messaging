@@ -1,4 +1,6 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const graphqlHttp = require('express-graphql');
 const cors = require('cors');
 
@@ -10,10 +12,30 @@ const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const { HOST, PORT } = require('./keys');
 
+const Middleware = require('./middleware');
+Middleware(app);
+
 app.use(protectedRoute);
+app.put('/post-image', (req, res) => {
+  if (!req.isAuth) {
+    throw new Error('Not authenticated');
+  }
+  console.log('Req file: ', req.file);
+
+  if (!req.file) {
+    return res.status(200).json({ message: 'No file provided' });
+  }
+
+  if (req.body.oldPath) {
+    clearImage(req.body.oldPath);
+  }
+
+  return res
+    .status(201)
+    .json({ message: 'File stored', filePath: req.file.path });
+});
 app.use(
   '/graphql',
-  cors(),
   graphqlHttp({
     schema: graphqlSchema,
     rootValue: graphqlResolver,
@@ -35,9 +57,11 @@ app.use(
   })
 );
 
-const Middleware = require('./middleware');
-Middleware(app);
-
 app.listen(PORT, () => {
   console.log(`Server is running on: http://${HOST}:${PORT}`);
 });
+
+const clearImage = filePath => {
+  filePath = path.join(__dirname, '..', filePath);
+  fs.unlink(filePath, err => console.error(err));
+};
