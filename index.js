@@ -1,10 +1,8 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
 const graphqlHttp = require('express-graphql');
-const cors = require('cors');
 
 const protectedRoute = require('./middleware/protected-route');
+const { clearImage } = require('./utils/fileUtil');
 
 const app = express();
 
@@ -60,8 +58,3 @@ app.use(
 app.listen(PORT, () => {
   console.log(`Server is running on: http://${HOST}:${PORT}`);
 });
-
-const clearImage = filePath => {
-  filePath = path.join(__dirname, '..', filePath);
-  fs.unlink(filePath, err => console.error(err));
-};

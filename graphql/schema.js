@@ -46,6 +46,7 @@ type RootMutation {
   createUser(userInput: UserInput): User!
   createPost(postInput: PostInput): Post!
   updatePost(id: ID!, postInput: PostInput!): Post!
+  deletePost(id: ID!): Boolean
 }
 
 type RootQuery {
