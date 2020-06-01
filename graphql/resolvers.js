@@ -147,7 +147,9 @@ module.exports = {
         createdAt: createdPost.createdAt.toISOString(),
         updatedAt: createdPost.updatedAt.toISOString(),
       };
-    } catch (error) {}
+    } catch (error) {
+      console.log('Error when creating a post: ', err.message);
+    }
   },
   getPosts: async function (args, req) {
     let { page } = args;
