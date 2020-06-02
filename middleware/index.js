@@ -1,4 +1,5 @@
 const bodyParser = require('body-parser');
+const compression = require('compression');
 const express = require('express');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -25,6 +26,7 @@ const fileFilter = (req, file, cb) => {
 
 const CommonMidldewware = app => {
   app.use(cors());
+  app.use(compression());
   app.use(helmet());
   app.use(morgan('dev'));
   app.use(bodyParser.json());
