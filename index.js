@@ -1,26 +1,60 @@
 const express = require('express');
-const http = require('http');
-const socketio = require('./socket');
+const graphqlHttp = require('express-graphql');
+
+const protectedRoute = require('./middleware/protected-route');
+const { clearImage } = require('./utils/fileUtil');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketio.init(server);
 
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 const { HOST, PORT } = require('./keys');
 
 const Middleware = require('./middleware');
 Middleware(app);
 
-const feed = require('./routes/feed');
-const auth = require('./routes/auth');
+app.use(protectedRoute);
+app.put('/post-image', (req, res) => {
+  if (!req.isAuth) {
+    throw new Error('Not authenticated');
+  }
+  console.log('Req file: ', req.file);
 
-app.use('/feed', feed);
-app.use('/auth', auth);
+  if (!req.file) {
+    return res.status(200).json({ message: 'No file provided' });
+  }
 
-io.on('connection', socket => {
-  console.log('A user connected');
+  if (req.body.oldPath) {
+    clearImage(req.body.oldPath);
+  }
+
+  return res
+    .status(201)
+    .json({ message: 'File stored', filePath: req.file.path });
 });
+app.use(
+  '/graphql',
+  graphqlHttp({
+    schema: graphqlSchema,
+    rootValue: graphqlResolver,
+    graphiql: true,
+    customFormatErrorFn(err) {
+      if (!err.originalError) {
+        return err;
+      }
+      const data = err.originalError.data;
+      const message = err.message || 'An error occured';
+      const code = err.originalError.code || 500;
 
-server.listen(PORT, () => {
+      return {
+        message,
+        code,
+        data,
+      };
+    },
+  })
+);
+
+app.listen(PORT, () => {
   console.log(`Server is running on: http://${HOST}:${PORT}`);
 });
